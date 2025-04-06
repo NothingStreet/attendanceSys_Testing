@@ -69,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # 初始化label显示的(黑色)背景
         self.bkg_pixmap = QPixmap('./logo_imgs/bkg1.png')
         # 设置主窗口的logo
-        self.logo = QIcon('./logo_imgs/fcb_logo.jpg')
+        self.logo = QIcon('./logo_imgs/Face_logo.png')
         # 设置提示框icon
         self.info_icon = QIcon('./logo_imgs/info_icon.jpg')
         # OpenCV深度学习人脸检测器的路径
