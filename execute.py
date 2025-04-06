@@ -23,7 +23,7 @@ from scipy.spatial import distance as dist
 # 导入UI主界面
 # from ui import MainUI
 # 使用mainwindow类重构
-from ui import mainwindow as MainWindowUI
+from ui import MainWindow as MainWindowUI
 
 # 导入打印中文脚本
 from utils import PutChineseText
