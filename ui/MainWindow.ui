@@ -93,9 +93,9 @@
     <property name="geometry">
      <rect>
       <x>150</x>
-      <y>690</y>
+      <y>700</y>
       <width>31</width>
-      <height>131</height>
+      <height>151</height>
      </rect>
     </property>
     <property name="orientation">
@@ -120,19 +120,6 @@
       <width>301</width>
       <height>161</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QProgressBar" name="progressBar">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>833</y>
-      <width>301</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="value">
-     <number>24</number>
     </property>
    </widget>
    <widget class="QPushButton" name="bt_blinks">
@@ -165,7 +152,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>690</y>
+      <y>700</y>
       <width>151</width>
       <height>21</height>
      </rect>
@@ -215,7 +202,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>760</y>
+      <y>790</y>
       <width>151</width>
       <height>61</height>
      </rect>
@@ -238,7 +225,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>720</y>
+      <y>740</y>
       <width>151</width>
       <height>31</height>
      </rect>
@@ -310,7 +297,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>760</y>
+      <y>790</y>
       <width>131</width>
       <height>61</height>
      </rect>
@@ -505,7 +492,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>690</y>
+      <y>700</y>
       <width>131</width>
       <height>61</height>
      </rect>
@@ -592,7 +579,7 @@
      <x>0</x>
      <y>0</y>
      <width>1086</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
