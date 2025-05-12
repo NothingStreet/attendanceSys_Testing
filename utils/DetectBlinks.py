@@ -10,11 +10,11 @@ import sys
 
 
 # 将根目录（execute所在目录）添加到环境变量
-from utils.GlobalVar import add_path_to_sys
+from utils.GlobalVar import add_path_to_sys,CAMERA_ID
 rootdir = add_path_to_sys()
 
 # 调用摄像头的id，如果是笔记本且外接了USB，可以设置为1
-cam_id = 1
+cam_id = CAMERA_ID
 
 
 def eye_aspect_ratio(eye):
