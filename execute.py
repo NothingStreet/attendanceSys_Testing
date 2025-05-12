@@ -21,8 +21,6 @@ from imutils.video import VideoStream
 from scipy.spatial import distance as dist
 
 # 导入UI主界面
-# from ui import MainUI
-# 使用mainwindow类重构
 from ui import MainWindow as MainWindowUI
 
 # 导入打印中文脚本
@@ -568,6 +566,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 try:
                     self.ui.textBrowser_log.append("[INFO] 正在从数据库获取当前用户信息...")
                     print(results[0], results[1], results[2], currentTime, self.description)
+
+                    self.lineTextInfo = [(results[0], results[1], results[2], currentTime, self.description)]
+
                 except ConnectionAbortedError as e:
                     self.ui.textBrowser_log.append("[INFO] 从数据库获取信息失败，请保证当前用户的信息和考勤记录已录入数据库！", e)
                 # 写入数据库
@@ -575,7 +576,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     # 如果存在数据，先删除再写入。前提是设置唯一索引字段或者主键。
                     insert_sql = "replace into checkin(Name, ID, Class, Time, Description) values(%s, %s, %s, %s, %s)"
                     users = self.lineTextInfo
-                    cursor.executemany(insert_sql, users)
+
+                    # 更改内容：插入前打印调试信息
+                    if not users:
+                        print("[Error] self.lineTextInfo 为空！无任何内容插入数据库")  # 更改内容
+                    else:
+                        cursor.executemany(insert_sql, users)
+
                 except ValueError as e:
                     self.ui.textBrowser_log.append("[INFO] 写入数据库失败！", e)
                 else:
@@ -691,10 +698,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_late_absence(self):
         db, cursor = connect_to_sql()
         # 一定要注意字符串在检索时要加''！
-        sql1 = "select name from checkin where Description = '{}'".format('迟到')
-        sql2 = "select name from students"
+        sql_late = "select name from checkin where Description = '{}'".format('迟到')
+        sql_allStudents = "select name from students"
+
+        sql_checked = "select name from checkin"
+
         try:
-            cursor.execute(sql1)
+            cursor.execute(sql_late)
             results = cursor.fetchall()
             self.late_students = []
             for x in results:
@@ -705,7 +715,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.textBrowser_log.append('[INFO] 查询迟到数据失败', e)
 
         try:
-            cursor.execute(sql2)
+            cursor.execute(sql_allStudents)
             results2 = cursor.fetchall()
             self.students_id = []
             for i in results2:
@@ -715,13 +725,22 @@ class MainWindow(QtWidgets.QMainWindow):
         except ConnectionAbortedError as e:
             self.ui.textBrowser_log.append('[INFO] 查询未到数据失败', e)
 
+        # 新增部分：查询所有已签到名字
+        try:
+            cursor.execute(sql_checked)
+            results3 = cursor.fetchall()
+            checked_students = [x[0] for x in results3]
+        except ConnectionAbortedError as e:
+            self.ui.textBrowser_log.append('[INFO] 查询签到名单失败', e)
+            checked_students = []
+
         finally:
             db.commit()
             cursor.close()
             db.close()
 
         # 集合运算，算出未到的和迟到的
-        self.absence_nums = set(set(self.students_id) - set(self.late_students))
+        self.absence_nums = list(set(self.students_id) - set(checked_students))  # 修改：用 checked_students 返回未到名单
         self.absence_nums = list(self.absence_nums)
         self.absence_nums.sort()
 
