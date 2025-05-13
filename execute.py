@@ -38,7 +38,7 @@ from utils.GlobalVar import connect_to_sql
 
 # 导入考勤状态判断相关函数
 from utils.AttendanceCheck import attendance_check
-from utils.GlobalVar import FR_LOOP_NUM, statical_facedata_nums
+from utils.GlobalVar import FR_LOOP_NUM, statical_facedata_nums, CAMERA_ID
 
 # # 为方便调试，修改后导入模块，重新导入全局变量模块
 # import importlib
@@ -92,10 +92,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.start()
 
         # ###################### 摄像头初始化 ######################
-        # 初始化摄像头，默认调用第一个摄像头
-        # self.url = 0
-        # 如果要调用摄像头1，则设置为1，适用于：笔记本外接USB摄像头
-        self.url = 0
+        # 初始化摄像头，赋值为GlobalVar中的变量值，方便切换摄像头
+        self.url = CAMERA_ID
         self.cap = cv2.VideoCapture()
         # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
         # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 400)
@@ -208,6 +206,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.startThread = BlinksDetectThread(self.get_current_frame) #直接传入当前帧到活体检测函数中，不用再次启动摄像头
 
                 self.startThread.start()  # 启动线程
+                self.ui.textBrowser_log.append('[INFO] 正在进行活体检测')
                 self.ui.bt_blinks.setText('停止检测')
             else:
                 self.ui.bt_blinks.setText('活体检测')
@@ -216,7 +215,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # self.startThread.terminate()  # 停止线程
                 if self.startThread:
                     self.startThread.terminate()
-                    QMessageBox.information(self, "Tips", "线程已停止！", QMessageBox.Ok)
+                    self.ui.textBrowser_log.append('[INFO] 活体检测已退出')
 
         else:
             QMessageBox.information(self, "Tips", "请先打开摄像头！", QMessageBox.Ok)
@@ -255,7 +254,7 @@ class MainWindow(QtWidgets.QMainWindow):
             detector = cv2.dnn.readNetFromCaffe(proto_path, model_path)
             # 从磁盘加载序列化面嵌入模型
             try:
-                self.ui.textBrowser_log.append("[INFO] loading face recognizer...")
+                self.ui.textBrowser_log.append("[INFO] 正在加载人脸识别模型")
                 # 加载FaceNet人脸识别模型
                 embedded = cv2.dnn.readNetFromTorch(self.embedding_model)
             except FileNotFoundError as e:
@@ -267,6 +266,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 le = pickle.loads(open(self.le_path, "rb").read())
             except FileNotFoundError as e:
                 self.ui.textBrowser_log.append("人脸识别模型保存路径不正确！", e)
+
+            self.ui.textBrowser_log.append("[INFO] 人脸识别模型加载完成")
 
             # 构造人脸id的字典，以便存储检测到每个id的人脸次数，键为人名(ID)，值初始化为0，方便统计次数
             self.face_name_dict = dict(zip(le.classes_, len(le.classes_) * [0]))
@@ -372,7 +373,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     if loop_num == FR_LOOP_NUM:
                         print(self.face_name_dict)
                         print(face_names)
-                        # 找到10帧中检测次数最多的人脸
+                        # 找到20帧中检测次数最多的人脸
                         # Python字典按照值的大小降序排列，并返回键值对元组
                         # 第一个索引[0]表示取排序后的第一个键值对，第二个索引[0]表示取键
                         most_id_in_dict = \
@@ -395,6 +396,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # 因为最后一张画面会显示在GUI中，此处实现清除。
             self.ui.label_camera.clear()
 
+    #记录签到信息
     def record_names(self):
         # 如果self.set_names是self.record_names 的子集返回ture
         if self.set_name.issubset(self.record_name):
@@ -440,9 +442,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     users2 = self.line_text_info
                     cursor.executemany(insert_sql2, users2)
                 except ConnectionAbortedError as e:
-                    self.ui.textBrowser_log.append("[INFO] SQL execute failed!")
+                    self.ui.textBrowser_log.append("[INFO] 签到信息写入失败!数据库连接异常！")
                 else:
-                    self.ui.textBrowser_log.append("[INFO] SQL execute success!")
+                    self.ui.textBrowser_log.append("[INFO] 签到信息已写入!")
                     QMessageBox.information(self, "Tips", "签到成功，请勿重复操作！", QMessageBox.Ok)
                 finally:
                     # 提交到数据库执行
@@ -755,7 +757,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 集合运算，算出未到的和迟到的
         self.absence_nums = list(set(self.students_id) - set(checked_students))  # 修改：用 checked_students 返回未到名单
-        self.absence_nums = list(self.absence_nums)
         self.absence_nums.sort()
 
         # 在控件中显示未到的同学

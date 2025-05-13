@@ -69,6 +69,7 @@ class BlinksDetectThread(QThread):
         return ear
 
     def run(self):
+        #print(self.BlinksFlag)
         if self.BlinksFlag == 1:
             # 初始化dlib的人脸检测器（基于HOG），然后创建面部标志预测器
             print("[INFO] loading facial landmark predictor...")
@@ -84,9 +85,8 @@ class BlinksDetectThread(QThread):
                 #5.12 修复摄像头资源冲突，主程序已经获取摄像头，再次获取引发闪退
                 #vs = VideoStream(src=CAMERA_ID).start()
                 #frame = vs.read()
-                while self.BlinksFlag == 1:
-                    frame = self.get_frame()
-                    if frame is None:
+                frame = self.get_frame()
+                if frame is None:
                         continue
 
                 QApplication.processEvents()
@@ -107,6 +107,12 @@ class BlinksDetectThread(QThread):
                     # 两只眼睛的平均眼睛纵横比
                     self.ear = (self.leftEAR + self.rightEAR) / 2.0
 
+                    # 计算左眼和右眼的凸包，然后可视化每只眼睛
+                    leftEyeHull = cv2.convexHull(self.leftEye)
+                    rightEyeHull = cv2.convexHull(self.rightEye)
+                    cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+                    cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+
                     # 检查眼睛纵横比是否低于闪烁阈值,如果是,则增加闪烁帧计数器;否则执行else
                     if self.ear < self.EYE_AR_THRESH:
                         self.COUNTER += 1
@@ -125,6 +131,8 @@ class BlinksDetectThread(QThread):
     # 定义停止线程操作
     def terminate(self):
         self.BlinksFlag = 0
+
+        #print(self.BlinksFlag)
 
         # 5.12 修复摄像头资源冲突
         #if self.BlinksFlag == 0:
