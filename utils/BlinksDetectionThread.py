@@ -23,11 +23,15 @@ from utils.GlobalVar import CAMERA_ID
 class BlinksDetectThread(QThread):
     trigger = QtCore.pyqtSignal()
 
-    def __init__(self):
+    # 5.12 修复摄像头资源冲突
+    def __init__(self,get_frame_callback):#从主程序传入当前帧
         """
         :rtype: object
         """
         super(BlinksDetectThread, self).__init__()
+
+        # 5.12 修复活体检测摄像头资源冲突
+        self.get_frame = get_frame_callback  # 主线程传入的帧获取函数
 
         # 人眼关键点检测模型路径，用于活体鉴别
         self.shape_predictor_path = f"{rootdir}/model_blink_detection/shape_predictor_68_face_landmarks.dat"
@@ -76,8 +80,15 @@ class BlinksDetectThread(QThread):
             while self.BlinksFlag == 1:
                 # 从线程视频文件流中抓取帧，调整其大小，并将其转换为灰度通道
                 # vs = VideoStream(src=cv2.CAP_DSHOW).start()
-                vs = VideoStream(src=CAMERA_ID).start()
-                frame = vs.read()
+
+                #5.12 修复摄像头资源冲突，主程序已经获取摄像头，再次获取引发闪退
+                #vs = VideoStream(src=CAMERA_ID).start()
+                #frame = vs.read()
+                while self.BlinksFlag == 1:
+                    frame = self.get_frame()
+                    if frame is None:
+                        continue
+
                 QApplication.processEvents()
                 frame = imutils.resize(frame, width=900)
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -114,5 +125,9 @@ class BlinksDetectThread(QThread):
     # 定义停止线程操作
     def terminate(self):
         self.BlinksFlag = 0
-        if self.BlinksFlag == 0:
-            VideoStream(src=CAMERA_ID).stop()
+
+        # 5.12 修复摄像头资源冲突
+        #if self.BlinksFlag == 0:
+            #VideoStream(src=CAMERA_ID).stop()
+        self.quit()
+        self.wait()

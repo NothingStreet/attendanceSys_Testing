@@ -193,17 +193,31 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 QMessageBox.information(self, "Tips", "请先打开摄像头！", QMessageBox.Ok)
 
+    # 5.12 修复活体检测摄像头资源冲突
+    def get_current_frame(self):
+        if hasattr(self, 'image'):
+            return self.image.copy()
+        return None
+
     def blinks_thread(self):
         bt_text = self.ui.bt_blinks.text()
         if self.cap.isOpened():
             if bt_text == '活体检测':
                 # 初始化眨眼检测线程
-                self.startThread = BlinksDetectThread()
+                # 5.12 修复活体检测摄像头资源冲突
+                self.startThread = BlinksDetectThread(self.get_current_frame) #直接传入当前帧到活体检测函数中，不用再次启动摄像头
+
                 self.startThread.start()  # 启动线程
                 self.ui.bt_blinks.setText('停止检测')
             else:
                 self.ui.bt_blinks.setText('活体检测')
+
+                #5.12 修复摄像头资源冲突
                 # self.startThread.terminate()  # 停止线程
+                if self.startThread:
+                    self.startThread.terminate()
+                    QMessageBox.information(self, "Tips", "线程已停止！", QMessageBox.Ok)
+
         else:
             QMessageBox.information(self, "Tips", "请先打开摄像头！", QMessageBox.Ok)
 
