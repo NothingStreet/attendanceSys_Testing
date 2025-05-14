@@ -61,7 +61,7 @@ while True:
 		break
 	# 从线程视频文件流中抓取帧，调整其大小，并将其转换为灰度通道
 	frame = vs.read()
-	frame = imutils.resize(frame, width=450)
+	frame = imutils.resize(frame, width=900)
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 	# 检测灰度帧中的人脸

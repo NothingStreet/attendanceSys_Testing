@@ -36,8 +36,8 @@ class BlinksDetectThread(QThread):
         # 人眼关键点检测模型路径，用于活体鉴别
         self.shape_predictor_path = f"{rootdir}/model_blink_detection/shape_predictor_68_face_landmarks.dat"
         # 定义两个常数，一个用于眼睛纵横比以指示眨眼，第二个作为眨眼连续帧数的阈值
-        self.EYE_AR_THRESH = 0.20
-        self.EYE_AR_CONSEC_FRAMES = 2
+        self.EYE_AR_THRESH = 0.2
+        self.EYE_AR_CONSEC_FRAMES = 3
 
         # 初始化帧计数器和总闪烁次数
         self.COUNTER = 0
@@ -87,7 +87,8 @@ class BlinksDetectThread(QThread):
                 #frame = vs.read()
                 frame = self.get_frame()
                 if frame is None:
-                        continue
+                    #print("空帧")
+                    continue
 
                 QApplication.processEvents()
                 frame = imutils.resize(frame, width=900)
@@ -107,12 +108,6 @@ class BlinksDetectThread(QThread):
                     # 两只眼睛的平均眼睛纵横比
                     self.ear = (self.leftEAR + self.rightEAR) / 2.0
 
-                    # 计算左眼和右眼的凸包，然后可视化每只眼睛
-                    leftEyeHull = cv2.convexHull(self.leftEye)
-                    rightEyeHull = cv2.convexHull(self.rightEye)
-                    cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-                    cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
-
                     # 检查眼睛纵横比是否低于闪烁阈值,如果是,则增加闪烁帧计数器;否则执行else
                     if self.ear < self.EYE_AR_THRESH:
                         self.COUNTER += 1
@@ -122,6 +117,12 @@ class BlinksDetectThread(QThread):
                             self.TOTAL += 1
                         # 重置眼框计数器
                         self.COUNTER = 0
+
+                    # 计算左眼和右眼的凸包，然后可视化每只眼睛
+                    leftEyeHull = cv2.convexHull(self.leftEye)
+                    rightEyeHull = cv2.convexHull(self.rightEye)
+                    cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+                    cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
                 self.trigger.emit()
                 if self.TOTAL == 1:
