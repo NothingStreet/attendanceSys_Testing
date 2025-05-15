@@ -56,6 +56,10 @@ class BlinksDetectThread(QThread):
         # 线程启动停止标识符
         self.BlinksFlag = 1
 
+        # 5.15 加入成员变量保存眼部轮廓，方便传入到主线程进行绘制
+        self.leftEyeHull = None
+        self.rightEyeHull = None
+
     # 定义眨眼检测距离函数
     def eye_aspect_ratio(self, eye):
         # 计算两组垂直方向上的眼睛标记（x，y）坐标之间的欧氏距离
@@ -115,19 +119,23 @@ class BlinksDetectThread(QThread):
                         # 如果眼睛闭合次数足够则增加眨眼总数
                         if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES:
                             self.TOTAL += 1
+                            print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
+                            print("[INFO] 人眼纵横比：", self.ear)
                         # 重置眼框计数器
                         self.COUNTER = 0
 
                     # 计算左眼和右眼的凸包，然后可视化每只眼睛
-                    leftEyeHull = cv2.convexHull(self.leftEye)
-                    rightEyeHull = cv2.convexHull(self.rightEye)
-                    cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-                    cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+                    self.leftEyeHull = cv2.convexHull(self.leftEye)
+                    self.rightEyeHull = cv2.convexHull(self.rightEye)
+
+                    #不在线程中绘制，防止线程冲突
+                    #cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+                    #cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
                 self.trigger.emit()
-                if self.TOTAL == 1:
-                    print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
-                    print("[INFO] 人眼纵横比：", self.ear)
+                #if self.TOTAL == 1:
+                    #print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
+                    #print("[INFO] 人眼纵横比：", self.ear)
 
     # 定义停止线程操作
     def terminate(self):
@@ -138,5 +146,7 @@ class BlinksDetectThread(QThread):
         # 5.12 修复摄像头资源冲突
         #if self.BlinksFlag == 0:
             #VideoStream(src=CAMERA_ID).stop()
+        self.leftEyeHull = None
+        self.rightEyeHull = None
         self.quit()
         self.wait()

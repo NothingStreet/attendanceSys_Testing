@@ -278,6 +278,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 loop_num += 1
                 # 从线程视频流中抓取帧
                 ret, frame = self.cap.read()
+
+                # 5.15 复制当前帧，使得传入活体线程中的为最新帧，避免眼框绘制时不会实时跟着眼睛
+                self.image = frame.copy()
+
                 QApplication.processEvents()
                 if ret:
                     # 调整框架的大小以使其宽度为900像素（同时保持纵横比），然后抓取图像尺寸
@@ -361,6 +365,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     if bt_liveness == '停止检测':
                         ChineseText = PutChineseText.put_chinese_text('./utils/microsoft.ttf')
                         frame = ChineseText.draw_text(frame, (330, 80), ' 请眨眨眼睛 ', 25, (55, 255, 55))
+
+                    # 5.15 如果活体线程存在并已检测出眼部轮廓，绘制绿色轮廓线
+                    if hasattr(self, 'startThread'):
+                        if hasattr(self.startThread, 'leftEyeHull') and self.startThread.leftEyeHull is not None:
+                            cv2.drawContours(frame, [self.startThread.leftEyeHull], -1, (0, 255, 0), 2)
+                        if hasattr(self.startThread, 'rightEyeHull') and self.startThread.rightEyeHull is not None:
+                            cv2.drawContours(frame, [self.startThread.rightEyeHull], -1, (0, 255, 0), 2)
 
                     # 显示输出框架
                     show_video = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # 这里指的是显示原图
