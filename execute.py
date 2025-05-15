@@ -11,9 +11,9 @@ import numpy as np
 import pymysql
 # 导入界面处理包
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QTimer, QDateTime, QCoreApplication, QThread
+from PyQt5.QtCore import QTimer, QDateTime, QCoreApplication, QThread, Qt
 from PyQt5.QtGui import QImage, QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox, QInputDialog, QLabel
 # 导入频帧画面大小调整包
 from imutils import face_utils
 from imutils.video import VideoStream
@@ -139,6 +139,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.spinBox_time_hour.setRange(0, 23)
         self.ui.spinBox_time_minute.setRange(0, 59)
 
+        #活体检测成功窗口
+        self.init_liveness_label()
+
+
+    def init_liveness_label(self):
+        self.liveness_label = QLabel(self.ui.centralwidget)
+        self.liveness_label.setText("活体检测成功！")
+        self.liveness_label.setStyleSheet("""
+            background-color: rgba(0, 0, 0, 150);
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+            padding: 10px;
+        """)
+        self.liveness_label.setAlignment(Qt.AlignCenter)
+        self.liveness_label.setFixedSize(250, 50)
+        self.liveness_label.move(325, 50)  # 控制位置（根据窗口调）
+        self.liveness_label.hide()
+
     # 显示系统时间以及相关文字提示函数
     def show_time_text(self):
         # 设置宽度
@@ -191,11 +210,21 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 QMessageBox.information(self, "Tips", "请先打开摄像头！", QMessageBox.Ok)
 
-    # 5.12 修复活体检测摄像头资源冲突
+    # 5.12 修复活体检测摄像头资源冲突,将主线程的图像传入活体线程
     def get_current_frame(self):
         if hasattr(self, 'image'):
             return self.image.copy()
         return None
+
+    '''活体检测成功提示函数
+    def liveness_success(self):
+        QMessageBox.information(self, "活体检测", "活体检测成功！已识别到眨眼行为。", QMessageBox.Ok)
+        self.ui.textBrowser_log.append("[INFO] 活体检测成功")'''
+    #活体检测成功提示函数实现自动隐藏
+    def show_liveness_message(self):
+        self.liveness_label.show()
+        QTimer.singleShot(1000, self.liveness_label.hide)  # 1秒后自动隐藏
+        self.ui.textBrowser_log.append("[INFO] 活体检测成功")
 
     def blinks_thread(self):
         bt_text = self.ui.bt_blinks.text()
@@ -207,6 +236,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.startThread.start()  # 启动线程
                 self.ui.textBrowser_log.append('[INFO] 正在进行活体检测')
+
+                #接收活体线程检测成功信号
+                #self.startThread.liveness_passed.connect(self.liveness_success)
+                self.startThread.liveness_passed.connect(self.show_liveness_message)
+
                 self.ui.bt_blinks.setText('停止检测')
             else:
                 self.ui.bt_blinks.setText('活体检测')

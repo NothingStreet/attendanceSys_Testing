@@ -23,6 +23,8 @@ from utils.GlobalVar import CAMERA_ID
 class BlinksDetectThread(QThread):
     trigger = QtCore.pyqtSignal()
 
+    liveness_passed = QtCore.pyqtSignal()  # 新增信号：检测通过,传给主线程
+
     # 5.12 修复摄像头资源冲突
     def __init__(self,get_frame_callback):#从主程序传入当前帧
         """
@@ -36,8 +38,8 @@ class BlinksDetectThread(QThread):
         # 人眼关键点检测模型路径，用于活体鉴别
         self.shape_predictor_path = f"{rootdir}/model_blink_detection/shape_predictor_68_face_landmarks.dat"
         # 定义两个常数，一个用于眼睛纵横比以指示眨眼，第二个作为眨眼连续帧数的阈值
-        self.EYE_AR_THRESH = 0.2
-        self.EYE_AR_CONSEC_FRAMES = 3
+        self.EYE_AR_THRESH = 0.25
+        self.EYE_AR_CONSEC_FRAMES = 2
 
         # 初始化帧计数器和总闪烁次数
         self.COUNTER = 0
@@ -119,23 +121,30 @@ class BlinksDetectThread(QThread):
                         # 如果眼睛闭合次数足够则增加眨眼总数
                         if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES:
                             self.TOTAL += 1
-                            print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
-                            print("[INFO] 人眼纵横比：", self.ear)
+
+                            #单独运行活体检测时的测试输出
+                            #print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
+                            #print("[INFO] 人眼纵横比：", self.ear)
+
+                            #只在第一次眨眼时发出信号
+                            #if self.TOTAL == 1:
+                                #print("[INFO] 活体检测通过！")
+                                #self.liveness_passed.emit()  # 通知主线程活体通过
+
+                            print("[INFO] 活体检测通过！")
+                            self.liveness_passed.emit()  # 通知主线程活体通过
+
                         # 重置眼框计数器
                         self.COUNTER = 0
 
                     # 计算左眼和右眼的凸包，然后可视化每只眼睛
                     self.leftEyeHull = cv2.convexHull(self.leftEye)
                     self.rightEyeHull = cv2.convexHull(self.rightEye)
-
                     #不在线程中绘制，防止线程冲突
                     #cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
                     #cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
                 self.trigger.emit()
-                #if self.TOTAL == 1:
-                    #print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
-                    #print("[INFO] 人眼纵横比：", self.ear)
 
     # 定义停止线程操作
     def terminate(self):
