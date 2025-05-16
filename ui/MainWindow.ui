@@ -221,7 +221,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="bt_load_model">
+   <widget class="QPushButton" name="bt_export">
     <property name="geometry">
      <rect>
       <x>180</x>
@@ -231,7 +231,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>加载模型</string>
+     <string>导出考勤记录</string>
     </property>
    </widget>
    <widget class="QPushButton" name="bt_view">

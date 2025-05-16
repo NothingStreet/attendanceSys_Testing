@@ -1,4 +1,4 @@
-import os
+import pandas as pd
 import pickle
 import sys
 import threading
@@ -50,8 +50,7 @@ import os
 # 添加当前路径到环境变量
 sys.path.append(os.getcwd())
 
-# 导入全局变量，主要包含摄像头ID等
-from utils.GlobalVar import CAMERA_ID
+
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -131,6 +130,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.bt_view.clicked.connect(self.show_late_absence)
         # 核验本地人脸数据集与数据库中的ID是否一致，即验证是否有未录入数据库的情况，以及是否有未采集人脸的情况。
         self.ui.bt_check_variation.clicked.connect(self.check_variation_db)
+        #考勤记录导出连接函数
+        self.ui.bt_export.clicked.connect(self.export_attendance_from_db)
 
         # self.check_time_set, ok = QInputDialog.getText(self, '考勤时间设定', '请输入考勤时间(格式为00:00:00):')
         self.check_time_set = '08:00:00'
@@ -852,6 +853,37 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.cap.isOpened():
             self.cap.release()
         QCoreApplication.quit()
+
+    #导出考勤记录
+    def export_attendance_from_db(self):
+        try:
+            # 连接数据库并执行查询
+            db, cursor = connect_to_sql()
+            query = "SELECT Name, ID, Class, Time, Description FROM checkin"
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            db.close()
+
+            # 如果没有记录
+            if not rows:
+                QMessageBox.information(self, "提示", "数据库中暂无考勤记录。", QMessageBox.Ok)
+                return
+
+            # 列名
+            columns = ["姓名", "学号", "班级", "签到时间", "状态"]
+            df = pd.DataFrame(rows, columns=columns)
+
+            # 构造导出路径
+            os.makedirs("./export", exist_ok=True)
+            filename = datetime.now().strftime("考勤记录_%Y%m%d_%H点%M分.xlsx")
+            filepath = os.path.join("./export", filename)
+
+            # 导出 Excel 文件
+            df.to_excel(filepath, index=False)
+            QMessageBox.information(self, "导出成功", f"记录已导出到：\n{filepath}", QMessageBox.Ok)
+
+        except Exception as e:
+            QMessageBox.warning(self, "导出失败", f"发生错误：\n{str(e)}", QMessageBox.Ok)
 
 
 if __name__ == '__main__':
