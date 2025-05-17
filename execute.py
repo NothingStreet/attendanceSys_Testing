@@ -38,7 +38,7 @@ from utils.GlobalVar import connect_to_sql
 
 # 导入考勤状态判断相关函数
 from utils.AttendanceCheck import attendance_check
-from utils.GlobalVar import FR_LOOP_NUM, statical_facedata_nums, CAMERA_ID
+from utils.GlobalVar import FR_LOOP_NUM, statical_facedata_nums, CAMERA_ID, RECOGNITION_THRESHOLD
 
 # # 为方便调试，修改后导入模块，重新导入全局变量模块
 # import importlib
@@ -143,7 +143,10 @@ class MainWindow(QtWidgets.QMainWindow):
         #活体检测成功窗口
         self.init_liveness_label()
 
+        # 中文字体
+        self.ChineseText = PutChineseText.put_chinese_text('./utils/microsoft.ttf')
 
+    # 活体检测成功弹窗
     def init_liveness_label(self):
         self.liveness_label = QLabel(self.ui.centralwidget)
         self.liveness_label.setText("活体检测成功！")
@@ -306,7 +309,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # 构造人脸id的字典，以便存储检测到每个id的人脸次数，键为人名(ID)，值初始化为0，方便统计次数
             self.face_name_dict = dict(zip(le.classes_, len(le.classes_) * [0]))
-            # 初始化循环次数，比如统计10帧中人脸的数量，取最大值进行考勤
+            # 初始化循环次数，比如统计20帧中人脸的数量，取最大值进行考勤
             loop_num = 0
             # 循环来自视频文件流的帧
             while self.cap.isOpened():
@@ -381,25 +384,48 @@ class MainWindow(QtWidgets.QMainWindow):
                             j = np.argmax(prediction)
                             # 得到预测概率
                             probability = prediction[j]
+
+
                             # 通过索引j找到人名(ID)转化为one-hot编码前的真实名称，也就是人脸数据集的文件夹名称，亦即数据库中ID字段的值
-                            name = le.classes_[j]
+                            #name = le.classes_[j]
+
+                            # 添加置信度判断，防止为
+                            # 置信度判断
+                            if probability < RECOGNITION_THRESHOLD:
+                                name = "未知人员"
+                            else:
+                                name = le.classes_[j]
 
                             # 统计各人脸被检测到的次数
-                            self.face_name_dict[name] += 1
+                            #self.face_name_dict[name] += 1
+
+                            # 添加判断，超过置信度的才计入次数
+                            if name != "未知人员":
+                                self.face_name_dict[name] += 1
 
                             # 绘制面部的边界框以及相关的概率
-                            text = "{}: {:.2f}%".format(name, probability * 100)
+                            #text = "{}: {:.2f}%".format(name, probability * 100)
+                            # 添加判断
+
                             # 构造人脸边界框
                             y = startY - 10 if startY - 10 > 10 else startY + 10
                             cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 0, 255), 2)
-                            frame = cv2.putText(frame, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255),
-                                                2)
-                            face_names.append(name)
+
+                            # 添加判断
+                            if name != "未知人员":
+                                text = "{}: {:.2f}%".format(name, probability * 100)
+                                frame = cv2.putText(frame, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255),2)
+                            else:
+                                frame=self.ChineseText.draw_text(frame, (startX, y-15), "检测为未知人员", 20, (0, 0, 255))
+
+                            # 添加判断
+                            #face_names.append(name)
+                            if name != "未知人员":
+                                face_names.append(name)
 
                     bt_liveness = self.ui.bt_blinks.text()
                     if bt_liveness == '停止检测':
-                        ChineseText = PutChineseText.put_chinese_text('./utils/microsoft.ttf')
-                        frame = ChineseText.draw_text(frame, (330, 80), ' 请眨眨眼睛 ', 25, (55, 255, 55))
+                        frame = self.ChineseText.draw_text(frame, (330, 80), ' 请眨眨眼睛 ', 25, (55, 255, 55))
 
                     # 5.15 如果活体线程存在并已检测出眼部轮廓，绘制绿色轮廓线
                     if hasattr(self, 'startThread'):
@@ -598,7 +624,6 @@ class MainWindow(QtWidgets.QMainWindow):
     # 请假/补签登记
     def leave_button(self):
         self.leave_students(1)
-
     def supplyment_button(self):
         self.leave_students(2)
 
@@ -702,6 +727,7 @@ class MainWindow(QtWidgets.QMainWindow):
             cursor.close()
             db.close()
 
+    #核验数据库和人脸信息完整性
     def check_variation_set_operate(self):
         # 并集
         union_set = set(self.student_ids).union(set(self.keys))
@@ -875,7 +901,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # 构造导出路径
             os.makedirs("./export", exist_ok=True)
-            filename = datetime.now().strftime("考勤记录_%Y%m%d_%H点%M分.xlsx")
+            filename = datetime.now().strftime("考勤记录_%Y年%m月%d日_%H点%M分.xlsx")
             filepath = os.path.join("./export", filename)
 
             # 导出 Excel 文件

@@ -20,6 +20,9 @@ LATE_SPAN = 30
 # 初始化循环次数，比如统计20帧中人脸的数量，取最大值进行考勤
 FR_LOOP_NUM = 20
 
+#人脸检测阈值，防止打卡时误识别
+RECOGNITION_THRESHOLD = 0.95
+
 # 将execute文件所在目录添加到根目录
 def add_path_to_sys():
     rootdir = "D:/desktop_file/bishe/Attendance System/Face-Recognition-Class-Attendance-System/"
