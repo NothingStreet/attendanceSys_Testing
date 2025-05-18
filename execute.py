@@ -445,6 +445,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     if loop_num == FR_LOOP_NUM:
                         print(self.face_name_dict)
                         print(face_names)
+
+                        ''' 识别次数为0也会记录到数据库中，因为排序后直接取[0][0],没有判断
                         # 找到20帧中检测次数最多的人脸
                         # Python字典按照值的大小降序排列，并返回键值对元组
                         # 第一个索引[0]表示取排序后的第一个键值对，第二个索引[0]表示取键
@@ -453,11 +455,25 @@ class MainWindow(QtWidgets.QMainWindow):
                         # 将当前帧检测到次数最多的人脸保存到self.set_name集合中
                         self.set_name = set()
                         self.set_name.add(most_id_in_dict)
-                        # self.set_name = set(face_names)
+
                         self.set_names = tuple(self.set_name)
                         print(self.set_name, self.set_names)
 
                         self.record_names()
+                        '''
+                        #修改逻辑
+                        # 找出识别次数大于0的人员
+                        valid_recognized = {k: v for k, v in self.face_name_dict.items() if v > 0}
+                        if not valid_recognized:
+                            self.ui.textBrowser_log.append("[warning] 本轮未识别到任何有效人脸")
+                        else:
+                            # 否则执行正常记录
+                            most_id_in_dict = \
+                            sorted(valid_recognized.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)[0][0]
+                            self.set_name = set()
+                            self.set_name.add(most_id_in_dict)
+                            self.record_names()
+
                         self.face_name_dict = dict(zip(le.classes_, len(le.classes_) * [0]))
                         loop_num = 0
                     else:
