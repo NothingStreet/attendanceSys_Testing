@@ -74,21 +74,29 @@ class RCDialog(QWidget):
         try:
             db, cursor = connect_to_sql()
         except ConnectionAbortedError as e:
-            self.ui.textBrowser_log.append('[INFO] 连接数据库失败，请检查配置信息！')
+            print('[INFO] 连接数据库失败，请检查配置信息！')
         else:
-            sql = "select id, name from students"
+            sql = "select id, name, class from students"
             # 执行查询
             cursor.execute(sql)
             results = cursor.fetchall()
             self.student_ids = []
             self.student_names = []
+            self.student_classes= []
             for item in results:
                 self.student_ids.append(item[0])
                 self.student_names.append(item[1])
+                self.student_classes.append(item[2])
             # 初始化点名列表
             self.random_check_names = deepcopy(self.student_names)
             self.random_check_ids = deepcopy(self.student_ids)
+            self.random_check_classes=deepcopy(self.student_classes)
             print("[INFO] 查询成功！")
+        finally:
+            # 提交到数据库执行
+            db.commit()
+            cursor.close()
+            db.close()
 
     # 随机点名
     def start_random_check(self):
@@ -98,13 +106,16 @@ class RCDialog(QWidget):
                 if box_choose == QMessageBox.Yes:
                     self.random_check_names = deepcopy(self.student_names)
                     self.random_check_ids = deepcopy(self.student_ids)
+                    self.random_check_classes=deepcopy(self.random_check_classes)
                 else:
                     pass
             else:
                 self.rc_id = random.choice(self.random_check_ids)
                 self.rc_name = self.random_check_names[self.random_check_ids.index(self.rc_id)]
+                self.rc_class=self.random_check_classes[self.random_check_ids.index(self.rc_id)]
                 self.random_check_ids.remove(self.rc_id)
                 self.random_check_names.remove(self.rc_name)
+                self.random_check_classes.remove(self.rc_class)
 
                 self.Dialog.lcdNumber_id.display(self.rc_id)
                 self.Dialog.textBrowser_name.append(self.rc_name)
@@ -124,9 +135,28 @@ class RCDialog(QWidget):
     def answer_fail(self):
         print(self.rc_id, self.rc_name, self.current_time, "回答失败")
 
-    # 未到
+    # 旷到
     def answer_absence(self):
-        print(self.rc_id, self.rc_name, self.current_time, "未到")
+        try:
+            # 打开数据库连接
+            db, cursor = connect_to_sql()
+        except ConnectionError as e:
+            print("[Error] 数据库连接失败！")
+
+        # 写入数据库
+        try:
+            # 如果存在数据，先删除再写入。前提是设置唯一索引字段或者主键。
+            insert_sql = "insert into checkin(Name, ID, Class, Time, Description) values(%s, %s, %s, %s, %s)"
+            user = [self.rc_name, self.rc_id, self.rc_class, self.current_time, "旷到"]
+            cursor.execute(insert_sql, user)
+        except ConnectionAbortedError as e:
+            print("[INFO] 签到信息写入失败!数据库连接异常！")
+        finally:
+            # 提交到数据库执行
+            db.commit()
+            cursor.close()
+            db.close()
+        print(self.rc_id, self.rc_name, self.current_time, "旷到")
 
     # 其它情况
     def answer_other(self):

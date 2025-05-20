@@ -21,7 +21,7 @@ LATE_SPAN = 30
 FR_LOOP_NUM = 20
 
 #人脸检测阈值，防止打卡时误识别
-RECOGNITION_THRESHOLD = 0.95
+RECOGNITION_THRESHOLD = 0.85
 
 # 将execute文件所在目录添加到根目录
 def add_path_to_sys():

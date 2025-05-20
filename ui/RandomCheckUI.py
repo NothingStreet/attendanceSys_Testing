@@ -63,14 +63,4 @@ class Ui_Form(object):
         self.pb_other.setText(_translate("Form", "其他"))
         self.pb_start.setText(_translate("Form", "开始筛选幸运观众"))
         self.pb_connect_db.setText(_translate("Form", "连接数据库"))
-        self.pb_absence.setText(_translate("Form", "未到"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Form = QtWidgets.QWidget()
-    ui = Ui_Form()
-    ui.setupUi(Form)
-    Form.show()
-    sys.exit(app.exec_())
+        self.pb_absence.setText(_translate("Form", "旷到"))
