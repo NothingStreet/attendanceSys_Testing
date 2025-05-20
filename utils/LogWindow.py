@@ -30,13 +30,99 @@ class LogInWindow(QMainWindow):
 
         # ########### 按钮绑定 #############
         # 设置登录注册界面切换
-        self.ui.login_bt.clicked.connect(lambda : self.ui.stackedWidget_2.setCurrentIndex(0))
-        self.ui.register_bt.clicked.connect(lambda: self.ui.stackedWidget_2.setCurrentIndex(1))
+        self.ui.login_bt.clicked.connect(lambda : (self.ui.stackedWidget_2.setCurrentIndex(0),self.ui.stackedWidget.setCurrentIndex(0)))
+        self.ui.register_bt.clicked.connect(lambda: (self.ui.stackedWidget_2.setCurrentIndex(1),self.ui.stackedWidget.setCurrentIndex(0)))
         #登录按键绑定
         self.ui.login_bt2.clicked.connect(self.LogIn)
+        #注册按键绑定
+        self.ui.register_bt2.clicked.connect(self.Register)
 
     def LogIn(self):
+        # 获取用户名和密码
         user = self.ui.lineEdit_logUser.text()
+        password = self.ui.lineEdit_LogPasssword.text()
+
+        # 判断是否为空
+        if not user or not password:
+            self.ui.stackedWidget.setCurrentIndex(1)
+            print("用户名或密码不能为空！")
+        else:
+            try:
+                db, cursor = connect_to_sql()
+            except Exception as e:
+                print("[ERROR] sql execute failed!", e)
+            else:
+                # 参数化执行，防止sql注入
+                sql = "SELECT * FROM userinfo WHERE name = %s"
+                cursor.execute(sql, (user,))
+                userData=cursor.fetchall()
+
+                # 先判断是否有该用户
+                if userData:
+                    user_record = userData[0]
+                    db_user = user_record[1]
+                    db_password = user_record[2]
+
+                    if db_user == user and db_password == password:
+                        self.login_success_signal.emit()
+                        print("登录成功")
+                    else:
+                        self.ui.stackedWidget.setCurrentIndex(3)
+                        print("密码错误")
+                else:
+                    self.ui.stackedWidget.setCurrentIndex(2)
+                    print("用户不存在")
+
+            finally:
+                cursor.close()
+                db.close()
+
+
+    def Register(self):
+
+        # 获取注册界面账号和密码
+        user = self.ui.lineEdit_ResUser.text()
+        password1 = self.ui.lineEdit_ResPassword.text()
+        password2 = self.ui.lineEdit_Respassword2.text()
+
+        # 判断是否为空
+        if not user or not password1 or not password2:
+            self.ui.stackedWidget.setCurrentIndex(4)
+            print("注册请输入完整")
+            return
+
+        if password1 != password2:
+            self.ui.stackedWidget.setCurrentIndex(5)
+            print("密码不匹配，请检查后重新输入密码")
+            return
+
+        try:
+            db, cursor = connect_to_sql()
+            # 查询是否存在相同用户名
+            sql = "SELECT * FROM userinfo WHERE name = %s"
+            cursor.execute(sql, (user,))
+            userData = cursor.fetchone()
+
+            if userData:
+                self.ui.stackedWidget.setCurrentIndex(6)
+                print("当前用户名已存在")
+            else:
+                # 插入新用户
+                insert_sql = "INSERT INTO userinfo (name, password) VALUES (%s, %s)"
+                cursor.execute(insert_sql, (user, password1))
+                db.commit()
+                self.ui.stackedWidget.setCurrentIndex(7)
+                print("注册成功！")
+
+        except Exception as e:
+            print("[ERROR] sql execute failed!", e)
+
+        finally:
+            cursor.close()
+            db.close()
+
+
+
 
 
 
