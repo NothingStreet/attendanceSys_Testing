@@ -43,7 +43,7 @@ class BlinksDetectThread(QThread):
 
         # 初始化帧计数器和总闪烁次数
         self.COUNTER = 0
-        self.TOTAL = 0
+        #self.TOTAL = 0
 
         # 初始化变量
         self.A = 0
@@ -120,7 +120,7 @@ class BlinksDetectThread(QThread):
                     else:
                         # 如果眼睛闭合次数足够则增加眨眼总数
                         if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES:
-                            self.TOTAL += 1
+                            #self.TOTAL += 1
 
                             #单独运行活体检测时的测试输出
                             #print("[INFO] 活体！眨眼次数为: {}".format(self.TOTAL))
