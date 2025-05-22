@@ -2,10 +2,11 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QLineEdit, QLabel, QApplication
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
-
+from PyQt5.QtGui import QPixmap, QIcon
 from ui import Login
 from utils.GlobalVar import connect_to_sql
 import sys
+import os
 
 class LogInWindow(QMainWindow):
 
@@ -16,6 +17,19 @@ class LogInWindow(QMainWindow):
         super().__init__()
         self.ui = Login.Ui_LoginWindow()
         self.ui.setupUi(self)
+
+        # 获取当前文件所在目录（utils/LogWindow.py）
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 构造图标路径（相对于 utils）
+        close_icon_path = os.path.join(base_dir, "../logo_imgs/LogIcon/close.png")
+        login_icon_path = os.path.join(base_dir, "../logo_imgs/LogIcon/login.png")
+        register_icon_path = os.path.join(base_dir, "../logo_imgs/LogIcon/register.png")
+
+        # 设置图标
+        self.ui.close_bt.setIcon(QIcon(QPixmap(close_icon_path)))
+        self.ui.login_bt.setIcon(QIcon(QPixmap(login_icon_path)))
+        self.ui.register_bt.setIcon(QIcon(QPixmap(register_icon_path)))
 
         # 隐藏系统自带的窗口，只显示内容
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
