@@ -484,6 +484,27 @@ class MainWindow(QtWidgets.QMainWindow):
             # 因为最后一张画面会显示在GUI中，此处实现清除。
             self.ui.label_camera.clear()
 
+    # 人员签到成功后提示弹窗
+    def show_auto_tip(self, text, duration=1500):
+        self.tip = QLabel(text, self)
+        self.tip.setStyleSheet("""
+            QLabel {
+                background-color: rgba(0, 255, 0, 180);
+                color: black;
+                font-size: 16px;
+                border: 1px solid gray;
+                border-radius: 8px;
+                padding: 8px;
+            }
+        """)
+        self.tip.adjustSize()
+        # 居中显示在窗口底部
+        self.tip.move((self.width() - self.tip.width()) // 2, self.height() - 80)
+        self.tip.show()
+
+        # 自动隐藏
+        QTimer.singleShot(duration, self.tip.close)
+
     #记录签到信息
     def record_names(self):
         # 如果self.set_names是self.record_names 的子集返回ture
@@ -533,7 +554,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.ui.textBrowser_log.append("[INFO] 签到信息写入失败!数据库连接异常！")
                 else:
                     self.ui.textBrowser_log.append("[INFO] 签到信息已写入!")
-                    QMessageBox.information(self, "Tips", "签到成功，请勿重复操作！", QMessageBox.Ok)
+                    #QMessageBox.information(self, "Tips", "签到成功，请勿重复操作！", QMessageBox.Ok)
+                    # 替换为自动提示，显示打卡人信息
+                    info_text = f"{results2[0]}（{results2[1]}）签到成功，状态：{self.attendance_state}"
+                    self.show_auto_tip(info_text)
                 finally:
                     # 提交到数据库执行
                     db.commit()
