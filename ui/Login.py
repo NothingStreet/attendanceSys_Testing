@@ -38,11 +38,24 @@ class Ui_LoginWindow(object):
 "color: rgb(255, 255, 255);")
         self.label_2.setObjectName("label_2")
         self.label_3 = QtWidgets.QLabel(self.frame)
-        self.label_3.setGeometry(QtCore.QRect(120, 310, 81, 31))
+        self.label_3.setGeometry(QtCore.QRect(120, 300, 81, 31))
         self.label_3.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font: 14pt \"幼圆\";\n"
 "")
         self.label_3.setObjectName("label_3")
+        self.label_11 = QtWidgets.QLabel(self.frame)
+        self.label_11.setGeometry(QtCore.QRect(90, 430, 141, 31))
+        font = QtGui.QFont()
+        font.setFamily("幼圆")
+        font.setPointSize(11)
+        font.setBold(False)
+        font.setItalic(False)
+        font.setWeight(50)
+        self.label_11.setFont(font)
+        self.label_11.setStyleSheet("color: rgb(255, 255, 255);\n"
+"font: 11pt \"幼圆\";\n"
+"")
+        self.label_11.setObjectName("label_11")
         self.frame_2 = QtWidgets.QFrame(self.centralwidget)
         self.frame_2.setGeometry(QtCore.QRect(370, 60, 321, 451))
         self.frame_2.setStyleSheet("#frame_2{\n"
@@ -304,6 +317,7 @@ class Ui_LoginWindow(object):
         self.label.setText(_translate("LoginWindow", "人脸识别考勤系统"))
         self.label_2.setText(_translate("LoginWindow", "Face Recognition Attendance System"))
         self.label_3.setText(_translate("LoginWindow", "欢迎登录"))
+        self.label_11.setText(_translate("LoginWindow", "刘金东毕业设计作品"))
         self.lineEdit_logUser.setPlaceholderText(_translate("LoginWindow", "账号"))
         self.lineEdit_LogPasssword.setPlaceholderText(_translate("LoginWindow", "密码"))
         self.login_bt2.setText(_translate("LoginWindow", "登录"))

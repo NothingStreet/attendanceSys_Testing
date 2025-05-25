@@ -454,14 +454,17 @@
       <height>21</height>
      </rect>
     </property>
+    <property name="currentText">
+     <string>2025001</string>
+    </property>
     <item>
      <property name="text">
-      <string>2020001</string>
+      <string>2025001</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>2020002</string>
+      <string>2025002</string>
      </property>
     </item>
    </widget>
